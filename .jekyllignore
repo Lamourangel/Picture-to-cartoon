@@ -1,0 +1,6 @@
+# Ignore non-site directories so Jekyll/GitHub Pages won't attempt to render dependency or server files
+# This prevents Liquid parsing errors from files inside node_modules or server directories.
+node_modules/
+server/
+**/node_modules/
+.DS_Store
