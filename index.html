@@ -1,0 +1,1483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>💰 PhouitLab · PayPal Integration Ready</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+        }
+
+        body {
+            min-height: 100vh;
+            background: #f7e600;
+            background-image: radial-gradient(circle at 20% 30%, #fffb8a 0%, #f7d900 80%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 1.5rem;
+            animation: bgPulse 10s ease-in-out infinite alternate;
+        }
+
+        @keyframes bgPulse {
+            0% {
+                background: #f7e600;
+            }
+            100% {
+                background: #ffcc00;
+            }
+        }
+
+        .card {
+            max-width: 1100px;
+            width: 100%;
+            background: #4a3328;
+            padding: 2rem 2.2rem 1.8rem;
+            border-radius: 64px 64px 48px 48px;
+            box-shadow: 0 24px 40px rgba(0, 0, 0, 0.5), 0 0 0 4px #f7e600, 0 0 0 8px #4a3328;
+            border: 2px solid #f7e600;
+            transition: 0.25s;
+            backdrop-filter: blur(2px);
+        }
+
+        .header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 1.5rem;
+            flex-wrap: wrap;
+        }
+
+        .header i {
+            font-size: 2.6rem;
+            color: #f7e600;
+            filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.6));
+            animation: bounceIcon 2.4s infinite ease-in-out;
+        }
+
+        @keyframes bounceIcon {
+            0% {
+                transform: scale(1) rotate(0deg);
+            }
+            50% {
+                transform: scale(1.1) rotate(6deg);
+            }
+            100% {
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        .header h1 {
+            font-weight: 800;
+            font-size: 2.4rem;
+            letter-spacing: -0.5px;
+            color: #f7e600;
+            text-shadow: 3px 3px 0 #4a3328, 6px 6px 0 rgba(0, 0, 0, 0.2);
+            -webkit-text-stroke: 1px #4a3328;
+        }
+
+        .header .badge {
+            background: #f7e600;
+            color: #4a3328;
+            padding: 0.25rem 1.2rem;
+            border-radius: 60px;
+            font-weight: 700;
+            font-size: 0.85rem;
+            border: 2px solid #4a3328;
+            box-shadow: 2px 2px 0 #4a3328;
+            margin-left: auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .upload-zone {
+            background: #5c4032;
+            border: 3px dashed #f7e600;
+            border-radius: 40px;
+            padding: 1.8rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: 0.2s;
+            cursor: pointer;
+            box-shadow: inset 0 6px 12px rgba(0, 0, 0, 0.5);
+            margin-bottom: 1.8rem;
+        }
+
+        .upload-zone:hover {
+            background: #6b4c3b;
+            border-color: #ffdd33;
+            transform: scale(1.01);
+        }
+
+        .upload-zone i {
+            font-size: 3.2rem;
+            color: #f7e600;
+            filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.6));
+            margin-bottom: 0.2rem;
+        }
+
+        .upload-zone p {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #f7e600;
+            text-shadow: 2px 2px 0 #4a3328;
+        }
+
+        .upload-zone .sub {
+            color: #d4c0b0;
+            font-weight: 500;
+            background: #4a332880;
+            padding: 0.15rem 1rem;
+            border-radius: 30px;
+            backdrop-filter: blur(2px);
+            font-size: 0.85rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .style-selector {
+            display: flex;
+            gap: 0.8rem;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-bottom: 1.8rem;
+        }
+
+        .style-option {
+            background: #5c4032;
+            border: 2px solid #f7e600;
+            border-radius: 40px;
+            padding: 0.5rem 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #d4c0b0;
+            font-weight: 600;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 0 #3a2a20;
+            flex: 1 1 auto;
+            min-width: 100px;
+            justify-content: center;
+        }
+
+        .style-option i {
+            color: #f7e600;
+            font-size: 1rem;
+        }
+
+        .style-option:hover {
+            background: #6b4c3b;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 #3a2a20;
+        }
+
+        .style-option.active {
+            background: #f7e600;
+            color: #4a3328;
+            border-color: #4a3328;
+            box-shadow: 0 4px 0 #4a3328;
+        }
+
+        .style-option.active i {
+            color: #4a3328;
+        }
+
+        .style-option .badge-style {
+            font-size: 0.6rem;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 0.1rem 0.5rem;
+            border-radius: 20px;
+        }
+
+        .preview-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            justify-content: center;
+            margin: 1.2rem 0 1.5rem;
+        }
+
+        .image-box {
+            flex: 1 1 210px;
+            min-width: 160px;
+            background: #4a3328;
+            border-radius: 36px;
+            padding: 0.5rem 0.5rem 0.7rem;
+            border: 3px solid #f7e600;
+            box-shadow: 0 8px 0 #4a3328, 0 12px 24px rgba(0, 0, 0, 0.6);
+            transition: 0.2s;
+        }
+
+        .image-box:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 0 #4a3328, 0 20px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        .image-box .label {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: 700;
+            color: #f7e600;
+            padding: 0.1rem 0.6rem 0.3rem;
+            font-size: 0.85rem;
+            text-shadow: 1px 1px 0 #4a3328;
+        }
+
+        .image-wrapper {
+            border-radius: 24px;
+            overflow: hidden;
+            background: #3a2a20;
+            aspect-ratio: 1 / 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #f7e600;
+            box-shadow: inset 0 4px 12px rgba(0, 0, 0, 0.7);
+            position: relative;
+        }
+
+        .image-wrapper img,
+        .image-wrapper canvas {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .placeholder-icon {
+            font-size: 3rem;
+            color: #f7e600;
+            opacity: 0.8;
+            filter: drop-shadow(0 4px 4px rgba(0, 0, 0, 0.6));
+        }
+
+        .watermark-preview {
+            position: absolute;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: #f7e600;
+            padding: 0.2rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            backdrop-filter: blur(4px);
+            pointer-events: none;
+            border: 1px solid rgba(247, 230, 0, 0.3);
+        }
+
+        .action-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.8rem;
+            justify-content: center;
+            margin-top: 0.5rem;
+        }
+
+        .btn {
+            border: 3px solid #4a3328;
+            padding: 0.7rem 1.6rem;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: 0.15s;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #4a3328;
+            letter-spacing: 0.3px;
+        }
+
+        .btn:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #4a3328;
+        }
+
+        .btn-primary {
+            background: #f7e600;
+            color: #4a3328;
+            border-color: #4a3328;
+        }
+
+        .btn-primary i {
+            color: #4a3328;
+        }
+
+        .btn-primary:hover {
+            background: #ffe033;
+            transform: scale(1.02);
+        }
+
+        .btn-outline {
+            background: #6b5a4a;
+            color: #f7e600;
+            border-color: #f7e600;
+        }
+
+        .btn-outline i {
+            color: #f7e600;
+        }
+
+        .btn-outline:hover {
+            background: #7f6b59;
+        }
+
+        .btn-download {
+            background: #8a7a6a;
+            color: #f7e600;
+            border-color: #f7e600;
+        }
+
+        .btn-download i {
+            color: #f7e600;
+        }
+
+        .btn-download:hover {
+            background: #9e8c7a;
+        }
+
+        .btn-download-unlocked {
+            background: #28a745;
+            color: white;
+            border-color: #1e7e34;
+        }
+
+        .btn-download-unlocked i {
+            color: white;
+        }
+
+        .btn-download-unlocked:hover {
+            background: #34ce57;
+        }
+
+        .footer-note {
+            margin-top: 1.8rem;
+            text-align: center;
+            color: #d4c0b0;
+            font-weight: 500;
+            border-top: 2px solid #f7e600;
+            padding-top: 1rem;
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+            flex-wrap: wrap;
+            font-size: 0.85rem;
+        }
+
+        .footer-note i {
+            color: #f7e600;
+        }
+
+        .card {
+            animation: cardPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes cardPop {
+            0% {
+                opacity: 0;
+                transform: scale(0.9) rotate(-2deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+            }
+        }
+
+        /* MODAL STYLES */
+        .download-paywall-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+            padding: 1.5rem;
+        }
+
+        .download-paywall-modal.show {
+            display: flex;
+        }
+
+        .download-paywall-content {
+            background: #4a3328;
+            border: 4px solid #f7e600;
+            border-radius: 48px;
+            padding: 2.5rem 2.8rem;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.8), 0 0 0 8px #4a3328;
+            animation: modalPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        @keyframes modalPop {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        .download-paywall-content .lock-icon {
+            font-size: 4.5rem;
+            color: #f7e600;
+            margin-bottom: 0.5rem;
+            filter: drop-shadow(0 4px 12px rgba(0, 0, 0, 0.6));
+        }
+
+        .download-paywall-content h2 {
+            color: #f7e600;
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 0.3rem;
+            text-shadow: 2px 2px 0 #4a3328;
+        }
+
+        .download-paywall-content p {
+            color: #d4c0b0;
+            font-size: 1rem;
+            margin-bottom: 0.8rem;
+            line-height: 1.5;
+        }
+
+        .download-paywall-content .price-tag {
+            background: #f7e600;
+            color: #4a3328;
+            padding: 0.3rem 2rem;
+            border-radius: 40px;
+            font-weight: 800;
+            font-size: 2.2rem;
+            margin: 0.8rem auto 1.2rem;
+            display: inline-block;
+            box-shadow: 0 4px 0 #4a3328;
+        }
+
+        /* PayPal Button Container */
+        #paypal-button-container {
+            margin: 0.5rem 0;
+            min-height: 50px;
+        }
+
+        /* Credit Card Button Container */
+        #card-button-container {
+            margin: 0.5rem 0;
+        }
+
+        .payment-divider {
+            display: flex;
+            align-items: center;
+            margin: 1.2rem 0;
+            color: #d4c0b0;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .payment-divider::before,
+        .payment-divider::after {
+            content: "";
+            flex: 1;
+            border-bottom: 2px solid #6b5a4a;
+        }
+
+        .payment-divider::before {
+            margin-right: 15px;
+        }
+
+        .payment-divider::after {
+            margin-left: 15px;
+        }
+
+        .card-pay-button {
+            background: #f7e600;
+            color: #4a3328;
+            border: 3px solid #4a3328;
+            padding: 0.8rem 1.6rem;
+            border-radius: 60px;
+            font-weight: 800;
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            max-width: 300px;
+            margin: 0 auto;
+            box-shadow: 0 6px 0 #4a3328;
+            font-family: 'Segoe UI', 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .card-pay-button:hover {
+            background: #ffe033;
+            transform: scale(1.02);
+        }
+
+        .card-pay-button:active {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #4a3328;
+        }
+
+        .card-pay-button i {
+            font-size: 1.2rem;
+        }
+
+        .card-pay-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        .download-paywall-content .btn-close-modal {
+            background: transparent;
+            border: 2px solid #6b5a4a;
+            color: #d4c0b0;
+            padding: 0.6rem 2rem;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 0.8rem;
+            transition: 0.2s;
+            width: 100%;
+        }
+
+        .download-paywall-content .btn-close-modal:hover {
+            background: #6b5a4a;
+            color: #f7e600;
+        }
+
+        .download-paywall-content .success-message {
+            display: none;
+            color: #28a745;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin: 0.5rem 0;
+        }
+
+        .download-paywall-content .success-message.show {
+            display: block;
+        }
+
+        .download-paywall-content .payment-status {
+            color: #d4c0b0;
+            font-size: 0.9rem;
+            margin: 0.5rem 0;
+            min-height: 1.5rem;
+        }
+
+        .download-paywall-content .payment-status.error {
+            color: #dc3545;
+        }
+
+        .download-paywall-content .payment-status.success {
+            color: #28a745;
+        }
+
+        .payment-loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(74, 51, 40, 0.3);
+            border-radius: 50%;
+            border-top-color: #4a3328;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (max-width: 700px) {
+            .card {
+                padding: 1.2rem;
+            }
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            .style-option {
+                font-size: 0.8rem;
+                padding: 0.4rem 0.8rem;
+                min-width: 70px;
+            }
+            .download-paywall-content {
+                padding: 1.8rem;
+            }
+            .download-paywall-content .price-tag {
+                font-size: 1.8rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="card">
+        <div class="header">
+            <i class="fas fa-robot"></i>
+            <h1>PhouitLab</h1>
+            <span class="badge"><i class="fas fa-download"></i> PayPal Ready</span>
+        </div>
+
+        <div class="upload-zone" id="uploadZone">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>📸 Drop your image or click</p>
+            <div class="sub"><i class="far fa-image"></i> JPG · PNG · WEBP</div>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <!-- 4 Style Options -->
+        <div class="style-selector" id="styleSelector">
+            <div class="style-option active" data-style="manga">
+                <i class="fas fa-dragon"></i> Dynamic feel
+                <span class="badge-style">✨</span>
+            </div>
+            <div class="style-option" data-style="comic">
+                <i class="fas fa-bolt"></i> Comic
+            </div>
+            <div class="style-option" data-style="vivid">
+                <i class="fas fa-palette"></i> Vivid
+            </div>
+            <div class="style-option" data-style="soft">
+                <i class="fas fa-feather"></i> Soft
+            </div>
+        </div>
+
+        <div class="preview-row">
+            <div class="image-box">
+                <div class="label"><i class="fas fa-image"></i> Original</div>
+                <div class="image-wrapper" id="originalWrapper">
+                    <i class="fas fa-camera placeholder-icon"></i>
+                </div>
+            </div>
+            <div class="image-box">
+                <div class="label"><i class="fas fa-eye"></i> Cartoon</div>
+                <div class="image-wrapper" id="cartoonWrapper">
+                    <i class="fas fa-star placeholder-icon"></i>
+                    <div class="watermark-preview">🔒 PREVIEW</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn btn-primary" id="cartoonifyBtn"><i class="fas fa-wand-sparkles"></i> ✨ Cartoonify</button>
+            <button class="btn btn-outline" id="resetBtn"><i class="fas fa-undo-alt"></i> Reset</button>
+            <button class="btn btn-download" id="downloadBtn"><i class="fas fa-download"></i> Download</button>
+        </div>
+
+        <div class="footer-note">
+            <span><i class="fas fa-arrow-right"></i> yellow · brown</span>
+            <span><i class="fas fa-eye"></i> expressive eyes</span>
+            <span><i class="fas fa-bolt"></i> dynamic</span>
+            <span><i class="fas fa-paypal"></i> PayPal ready</span>
+        </div>
+    </div>
+
+    <!-- UI Feedback Elements -->
+    <div id="loading" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #f7e600; color: #4a3328; padding: 1rem 2rem; border-radius: 40px; font-weight: 700; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></div>
+    <div id="error" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #dc3545; color: white; padding: 1rem 2rem; border-radius: 40px; font-weight: 700; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></div>
+    <div id="success" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #28a745; color: white; padding: 1rem 2rem; border-radius: 40px; font-weight: 700; z-index: 10000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);"></div>
+
+    <!-- DOWNLOAD PAYWALL MODAL -->
+    <div class="download-paywall-modal" id="downloadPaywallModal">
+        <div class="download-paywall-content">
+            <i class="fas fa-lock lock-icon"></i>
+            <h2>🔒 Unlock Download</h2>
+            <p>Download your high-quality cartoon image. Pay once, download forever.</p>
+            <div class="price-tag" id="priceTag">$1</div>
+
+            <!-- PayPal Button Container -->
+            <div id="paypal-button-container"></div>
+
+            <!-- Divider -->
+            <div class="payment-divider">OR</div>
+
+            <!-- Credit/Debit Card Button Container -->
+            <div id="card-button-container"></div>
+
+            <!-- Card Fields Container -->
+            <div class="card-fields-container">
+                <div class="card-field" id="paypal-card-fields-number"></div>
+                <div class="card-field" id="paypal-card-fields-expiry"></div>
+                <div class="card-field" id="paypal-card-fields-cvv"></div>
+            </div>
+            <button id="pay-button">Pay Now</button>
+
+            <div class="payment-status" id="paymentStatus">Choose a payment method above</div>
+            <div class="success-message" id="paymentSuccessMsg">✅ Payment successful! Download ready.</div>
+
+            <button class="btn-close-modal" id="closeModalBtn">Cancel</button>
+            <p style="font-size:0.7rem; margin-top:0.8rem; color:#b3a090;">✓ Instant access · No subscription · Secure payment</p>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // ================================================================
+            // 1. CONFIGURATION
+            // ================================================================
+            const CONFIG = {
+                MAX_IMAGE_SIZE: 700,
+                PRICE_DISPLAY: '$1',
+                SERVER_URL: 'http://localhost:3000',
+                PAYPAL_CLIENT_ID: null,
+                CURRENCY: 'USD',
+                PRICE: '1'
+            };
+
+            // Load config from server .env file
+            async function loadConfigFromEnv() {
+                try {
+                    const response = await fetch('http://localhost:3000/api/paypal-config');
+                    const data = await response.json();
+                    
+                    if (data.success) {
+                        CONFIG.PAYPAL_CLIENT_ID = data.clientId;
+                        CONFIG.CURRENCY = data.currency;
+                        CONFIG.PRICE = data.price;
+                        CONFIG.SERVER_URL = data.serverUrl;
+                        CONFIG.PRICE_DISPLAY = `$${data.price}`;
+                        
+                        const priceTag = document.getElementById('priceTag');
+                        if (priceTag) {
+                            priceTag.textContent = CONFIG.PRICE_DISPLAY;
+                        }
+                        
+                        console.log('✅ Config loaded from .env:', CONFIG);
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error('Error loading config:', error);
+                    // Use default config
+                    CONFIG.PAYPAL_CLIENT_ID = 'BAA61ATUiqOAF3AmtmKj0PwZN_JOxUld28cf6d1SZqpEUNil1d_DsfULEE-SCaCUGqs_f6ZWEuXrnRRmMEM';
+                    return true;
+                }
+            }
+
+            // ================================================================
+            // 2. UI HELPER FUNCTIONS
+            // ================================================================
+            function showLoading(message) {
+                const el = document.getElementById('loading');
+                if (el) {
+                    el.textContent = message;
+                    el.style.display = 'block';
+                }
+            }
+
+            function hideLoading() {
+                const el = document.getElementById('loading');
+                if (el) el.style.display = 'none';
+            }
+
+            function showError(message) {
+                const el = document.getElementById('error');
+                if (el) {
+                    el.textContent = message;
+                    el.style.display = 'block';
+                }
+                setTimeout(() => {
+                    if (el) el.style.display = 'none';
+                }, 5000);
+            }
+
+            function showSuccess(message) {
+                const el = document.getElementById('success');
+                if (el) {
+                    el.textContent = message;
+                    el.style.display = 'block';
+                }
+            }
+
+            // ================================================================
+            // 3. PAYMENT FUNCTIONS
+            // ================================================================
+            
+            // Create payment on server
+            async function createPaymentOnServer() {
+                try {
+                    const response = await fetch(`${CONFIG.SERVER_URL}/api/create-payment`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error(data.error || 'Failed to create payment');
+                    }
+                    
+                    return data.id;
+                } catch (error) {
+                    console.error('Create payment error:', error);
+                    throw error;
+                }
+            }
+
+            // Verify payment on server
+            async function verifyPaymentOnServer(orderID) {
+                try {
+                    const response = await fetch(`${CONFIG.SERVER_URL}/api/verify-payment`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ orderID })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error(data.error || 'Payment verification failed');
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    console.error('Verify payment error:', error);
+                    throw error;
+                }
+            }
+
+            // Handle successful payment
+            function handlePaymentSuccess(result) {
+                showSuccess('Payment confirmed! You can now download your image.');
+                
+                // Update UI to show download is unlocked
+                isPaid = true;
+                transactionId = result.transactionId;
+                downloadBtn.classList.add('btn-download-unlocked');
+                downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download (Unlocked)';
+                
+                // Show success in modal
+                paymentSuccessMsg.classList.add('show');
+                paymentStatus.textContent = '✅ Payment verified! Click Download to save your image.';
+                paymentStatus.className = 'payment-status success';
+                
+                // Auto-close modal after 2 seconds
+                setTimeout(() => {
+                    modal.classList.remove('show');
+                }, 2000);
+            }
+
+            // ================================================================
+            // 4. PAYPAL BUTTON
+            // ================================================================
+            async function renderPayPalButton() {
+                try {
+                    // Load config if not loaded
+                    if (!CONFIG.PAYPAL_CLIENT_ID) {
+                        await loadConfigFromEnv();
+                    }
+                    
+                    // Dynamically load PayPal SDK
+                    await new Promise((resolve, reject) => {
+                        const script = document.createElement('script');
+                        script.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=${CONFIG.CURRENCY}`;
+                        script.onload = resolve;
+                        script.onerror = reject;
+                        document.head.appendChild(script);
+                    });
+                    
+                    // Render PayPal button
+                    paypal.Buttons({
+                        createOrder: async () => {
+                            try {
+                                paymentStatus.textContent = 'Creating payment...';
+                                paymentStatus.className = 'payment-status';
+                                const orderID = await createPaymentOnServer();
+                                return orderID;
+                            } catch (error) {
+                                paymentStatus.textContent = 'Error: ' + error.message;
+                                paymentStatus.className = 'payment-status error';
+                                throw error;
+                            }
+                        },
+                        
+                        onApprove: async (data) => {
+                            try {
+                                paymentStatus.textContent = 'Verifying payment...';
+                                paymentStatus.className = 'payment-status';
+                                const result = await verifyPaymentOnServer(data.orderID);
+                                handlePaymentSuccess(result);
+                            } catch (error) {
+                                paymentStatus.textContent = 'Error: ' + error.message;
+                                paymentStatus.className = 'payment-status error';
+                            }
+                        },
+                        
+                        onError: (err) => {
+                            console.error('PayPal error:', err);
+                            paymentStatus.textContent = 'PayPal error. Please try again.';
+                            paymentStatus.className = 'payment-status error';
+                            showError('PayPal payment failed. Please try again.');
+                        },
+                        
+                        onCancel: () => {
+                            paymentStatus.textContent = 'Payment cancelled. You can try again.';
+                            paymentStatus.className = 'payment-status';
+                        }
+                        
+                    }).render('#paypal-button-container');
+                    
+                } catch (error) {
+                    console.error('Failed to load PayPal:', error);
+                    const container = document.getElementById('paypal-button-container');
+                    container.innerHTML = `
+                        <div style="color: #dc3545; padding: 10px; background: rgba(220,53,69,0.1); border-radius: 8px;">
+                            ⚠️ Failed to load PayPal. Please refresh the page.
+                        </div>
+                    `;
+                }
+            }
+
+            // ================================================================
+            // 5. CREDIT/DEBIT CARD BUTTON
+            // ================================================================
+            function setupCardPayment() {
+                const cardButton = document.createElement('button');
+                cardButton.className = 'card-pay-button';
+                cardButton.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
+                cardButton.id = 'cardPayButton';
+                
+                // Add to container
+                const container = document.getElementById('card-button-container');
+                container.appendChild(cardButton);
+                
+                // Click handler
+                cardButton.addEventListener('click', async function() {
+                    // Disable button to prevent double-click
+                    this.disabled = true;
+                    this.innerHTML = '<span class="payment-loading-spinner"></span> Processing...';
+                    
+                    try {
+                        // Step 1: Create payment
+                        paymentStatus.textContent = 'Creating payment...';
+                        paymentStatus.className = 'payment-status';
+                        
+                        const orderID = await createPaymentOnServer();
+                        
+                        // Step 2: Simulate card payment (in production, redirect to payment page)
+                        // For this demo, we'll use PayPal's card processing
+                        // In production, you would redirect to a card payment page
+                        
+                        // For demo: Show a card payment form
+                        paymentStatus.textContent = 'For card payments, we use PayPal\'s secure checkout. Redirecting...';
+                        paymentStatus.className = 'payment-status';
+                        
+                        // Simulate card payment flow
+                        // In production, you would redirect to your card payment page
+                        // or use PayPal's card fields
+                        
+                        // For demo: auto-verify after 2 seconds
+                        setTimeout(async () => {
+                            try {
+                                const result = await verifyPaymentOnServer(orderID);
+                                handlePaymentSuccess(result);
+                                this.disabled = false;
+                                this.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
+                            } catch (error) {
+                                paymentStatus.textContent = 'Card payment failed: ' + error.message;
+                                paymentStatus.className = 'payment-status error';
+                                this.disabled = false;
+                                this.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
+                            }
+                        }, 2000);
+                        
+                    } catch (error) {
+                        paymentStatus.textContent = 'Error: ' + error.message;
+                        paymentStatus.className = 'payment-status error';
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
+                    }
+                });
+            }
+
+            // ================================================================
+            // 6. APP LOGIC
+            // ================================================================
+            const fileInput = document.getElementById('fileInput');
+            const uploadZone = document.getElementById('uploadZone');
+            const originalWrapper = document.getElementById('originalWrapper');
+            const cartoonWrapper = document.getElementById('cartoonWrapper');
+            const cartoonifyBtn = document.getElementById('cartoonifyBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
+            const styleOptions = document.querySelectorAll('.style-option');
+
+            const modal = document.getElementById('downloadPaywallModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const paymentSuccessMsg = document.getElementById('paymentSuccessMsg');
+            const paymentStatus = document.getElementById('paymentStatus');
+
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+
+            let currentImage = null;
+            let currentFile = null;
+            let currentStyle = 'manga';
+            let isPaid = false;
+            let currentCartoonDataURL = null;
+            let transactionId = null;
+
+            // --- STYLE SELECTION ---
+            styleOptions.forEach(opt => {
+                opt.addEventListener('click', function() {
+                    styleOptions.forEach(o => o.classList.remove('active'));
+                    this.classList.add('active');
+                    currentStyle = this.dataset.style;
+                    if (currentImage) {
+                        cartoonifyCurrent();
+                    }
+                });
+            });
+
+            // --- RESET ---
+            function resetDisplay() {
+                currentImage = null;
+                currentFile = null;
+                isPaid = false;
+                currentCartoonDataURL = null;
+                transactionId = null;
+                originalWrapper.innerHTML = `<i class="fas fa-camera placeholder-icon"></i>`;
+                cartoonWrapper.innerHTML = `<i class="fas fa-star placeholder-icon"></i>`;
+                const watermark = document.createElement('div');
+                watermark.className = 'watermark-preview';
+                watermark.textContent = '🔒 PREVIEW';
+                cartoonWrapper.appendChild(watermark);
+
+                fileInput.value = '';
+                downloadBtn.classList.remove('btn-download-unlocked');
+                downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+
+                paymentSuccessMsg.classList.remove('show');
+                paymentStatus.textContent = 'Choose a payment method above';
+                paymentStatus.className = 'payment-status';
+                modal.classList.remove('show');
+            }
+
+            // --- LOAD IMAGE ---
+            function loadImageFromFile(file) {
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        currentImage = img;
+                        currentFile = file;
+                        isPaid = false;
+                        currentCartoonDataURL = null;
+                        transactionId = null;
+                        downloadBtn.classList.remove('btn-download-unlocked');
+                        downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+
+                        const clone = img.cloneNode(true);
+                        clone.style.width = '100%';
+                        clone.style.height = '100%';
+                        clone.style.objectFit = 'cover';
+                        originalWrapper.innerHTML = '';
+                        originalWrapper.appendChild(clone);
+
+                        cartoonWrapper.innerHTML = '';
+                        const watermark = document.createElement('div');
+                        watermark.className = 'watermark-preview';
+                        watermark.textContent = '🔒 PREVIEW';
+                        cartoonWrapper.appendChild(watermark);
+
+                        cartoonifyCurrent();
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // --- CARTOON EFFECT ---
+            function applyCartoonEffect(sourceImg, style) {
+                let w = sourceImg.naturalWidth || sourceImg.width;
+                let h = sourceImg.naturalHeight || sourceImg.height;
+                const MAX = CONFIG.MAX_IMAGE_SIZE || 700;
+                if (w > MAX || h > MAX) {
+                    const ratio = Math.min(MAX / w, MAX / h);
+                    w = Math.floor(w * ratio);
+                    h = Math.floor(h * ratio);
+                }
+                canvas.width = w;
+                canvas.height = h;
+                ctx.clearRect(0, 0, w, h);
+                ctx.drawImage(sourceImg, 0, 0, w, h);
+
+                const imageData = ctx.getImageData(0, 0, w, h);
+                const data = imageData.data;
+
+                const gray = new Uint8Array(w * h);
+                for (let i = 0; i < data.length; i += 4) {
+                    gray[i / 4] = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+                }
+
+                const edge1 = new Uint8Array(w * h);
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const idx = y * w + x;
+                        const gx = -gray[(y - 1) * w + (x - 1)] + gray[(y - 1) * w + (x + 1)] -
+                            2 * gray[y * w + (x - 1)] + 2 * gray[y * w + (x + 1)] -
+                            gray[(y + 1) * w + (x - 1)] + gray[(y + 1) * w + (x + 1)];
+                        const gy = -gray[(y - 1) * w + (x - 1)] - 2 * gray[(y - 1) * w + x] - gray[(y - 1) * w + (x +
+                            1)] +
+                            gray[(y + 1) * w + (x - 1)] + 2 * gray[(y + 1) * w + x] + gray[(y + 1) * w + (x + 1)];
+                        const mag = Math.min(255, Math.sqrt(gx * gx + gy * gy));
+                        edge1[idx] = Math.min(255, Math.round(mag * 1.5));
+                    }
+                }
+
+                const edge = new Uint8Array(w * h);
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const idx = y * w + x;
+                        const val = edge1[idx];
+                        let maxVal = val;
+                        for (let dy = -1; dy <= 1; dy++) {
+                            for (let dx = -1; dx <= 1; dx++) {
+                                if (dx === 0 && dy === 0) continue;
+                                const nIdx = (y + dy) * w + (x + dx);
+                                if (edge1[nIdx] > maxVal) maxVal = edge1[nIdx];
+                            }
+                        }
+                        edge[idx] = (val >= maxVal * 0.8) ? val : 0;
+                    }
+                }
+
+                const eyeMap = new Float32Array(w * h);
+                for (let y = 0; y < h; y++) {
+                    for (let x = 0; x < w; x++) {
+                        const idx = y * w + x;
+                        const r = data[idx * 4];
+                        const g = data[idx * 4 + 1];
+                        const b = data[idx * 4 + 2];
+                        const lum = 0.299 * r + 0.587 * g + 0.114 * b;
+                        const edgeVal = edge[idx] / 255;
+                        const eyeScore = (lum / 255) * (1 - edgeVal * 0.5) * (1 + (r > 80 && g > 50 ? 0.2 : 0));
+                        eyeMap[idx] = Math.min(1, eyeScore);
+                    }
+                }
+
+                let posterizeSteps = 7,
+                    saturation = 1.6,
+                    edgeStrength = 0.7,
+                    contrast = 1.2,
+                    brightness = 1.08,
+                    eyeBoost = 1.5,
+                    shadowBoost = 1.15,
+                    highlightBoost = 1.2;
+
+                switch (style) {
+                    case 'manga':
+                        posterizeSteps = 7;
+                        saturation = 1.6;
+                        edgeStrength = 0.7;
+                        contrast = 1.2;
+                        brightness = 1.08;
+                        eyeBoost = 1.5;
+                        shadowBoost = 1.15;
+                        highlightBoost = 1.2;
+                        break;
+                    case 'comic':
+                        posterizeSteps = 6;
+                        saturation = 1.7;
+                        edgeStrength = 0.6;
+                        contrast = 1.15;
+                        brightness = 1.1;
+                        eyeBoost = 1.3;
+                        shadowBoost = 1.1;
+                        highlightBoost = 1.0;
+                        break;
+                    case 'vivid':
+                        posterizeSteps = 5;
+                        saturation = 2.0;
+                        edgeStrength = 0.55;
+                        contrast = 1.25;
+                        brightness = 1.12;
+                        eyeBoost = 1.4;
+                        shadowBoost = 1.1;
+                        highlightBoost = 1.1;
+                        break;
+                    case 'soft':
+                        posterizeSteps = 8;
+                        saturation = 1.2;
+                        edgeStrength = 0.4;
+                        contrast = 1.05;
+                        brightness = 1.15;
+                        eyeBoost = 1.4;
+                        shadowBoost = 1.15;
+                        highlightBoost = 1.0;
+                        break;
+                    default:
+                        posterizeSteps = 7;
+                        saturation = 1.6;
+                        edgeStrength = 0.7;
+                        contrast = 1.2;
+                        brightness = 1.08;
+                        eyeBoost = 1.5;
+                        shadowBoost = 1.15;
+                        highlightBoost = 1.2;
+                }
+
+                const step = 255 / posterizeSteps;
+
+                for (let i = 0; i < data.length; i += 4) {
+                    let r = data[i];
+                    let g = data[i + 1];
+                    let b = data[i + 2];
+
+                    const idx = i / 4;
+                    const lumOrig = 0.299 * r + 0.587 * g + 0.114 * b;
+
+                    if (lumOrig < 100) {
+                        const boost = shadowBoost + (1 - lumOrig / 100) * 0.15;
+                        r = Math.min(255, Math.round(r * boost));
+                        g = Math.min(255, Math.round(g * boost));
+                        b = Math.min(255, Math.round(b * boost));
+                    } else if (lumOrig >= 100 && lumOrig < 180) {
+                        const boost = 1.05 + (180 - lumOrig) / 180 * 0.08;
+                        r = Math.min(255, Math.round(r * boost));
+                        g = Math.min(255, Math.round(g * boost));
+                        b = Math.min(255, Math.round(b * boost));
+                    } else if (lumOrig >= 180) {
+                        const boost = highlightBoost + (lumOrig - 180) / 75 * 0.15;
+                        r = Math.min(255, Math.round(r * boost));
+                        g = Math.min(255, Math.round(g * boost));
+                        b = Math.min(255, Math.round(b * boost));
+                    }
+
+                    r = Math.round(r / step) * step;
+                    g = Math.round(g / step) * step;
+                    b = Math.round(b / step) * step;
+
+                    const grayVal = 0.299 * r + 0.587 * g + 0.114 * b;
+                    r = Math.min(255, Math.round(grayVal + saturation * (r - grayVal)));
+                    g = Math.min(255, Math.round(grayVal + saturation * (g - grayVal)));
+                    b = Math.min(255, Math.round(grayVal + saturation * (b - grayVal)));
+
+                    const e = edge[idx] || 0;
+                    const eyeScore = eyeMap[idx] || 0;
+
+                    let strength = edgeStrength;
+                    if (eyeScore > 0.4) strength = 0.2;
+                    const localContrast = Math.abs(r - g) + Math.abs(g - b) + Math.abs(b - r);
+                    if (localContrast > 60 && eyeScore < 0.3) {
+                        strength = Math.min(0.85, strength * 1.2);
+                    }
+
+                    const factor = 1 - (e / 255) * strength;
+                    r = Math.min(255, Math.round(r * factor));
+                    g = Math.min(255, Math.round(g * factor));
+                    b = Math.min(255, Math.round(b * factor));
+
+                    if (eyeScore > 0.45) {
+                        const boost = eyeBoost + eyeScore * 0.3;
+                        r = Math.min(255, Math.round(r * boost));
+                        g = Math.min(255, Math.round(g * boost));
+                        b = Math.min(255, Math.round(b * boost));
+                        if (eyeScore > 0.6) {
+                            const eyeLum = 0.299 * r + 0.587 * g + 0.114 * b;
+                            if (eyeLum > 100 && eyeLum < 200) {
+                                b = Math.min(255, Math.round(b * 1.1));
+                                r = Math.max(0, Math.round(r * 0.95));
+                            }
+                            if (eyeLum > 150) {
+                                r = Math.min(255, r + 25);
+                                g = Math.min(255, g + 25);
+                                b = Math.min(255, b + 35);
+                            }
+                        }
+                    }
+
+                    r = Math.min(255, Math.round(r * brightness));
+                    g = Math.min(255, Math.round(g * brightness));
+                    b = Math.min(255, Math.round(b * brightness));
+
+                    data[i] = r;
+                    data[i + 1] = g;
+                    data[i + 2] = b;
+                }
+
+                ctx.putImageData(imageData, 0, 0);
+
+                const finalCanvas = document.createElement('canvas');
+                finalCanvas.width = w;
+                finalCanvas.height = h;
+                const fctx = finalCanvas.getContext('2d');
+                fctx.filter = `contrast(${contrast}) saturate(1.05) brightness(1.02)`;
+                fctx.drawImage(canvas, 0, 0);
+
+                const sharpCanvas = document.createElement('canvas');
+                sharpCanvas.width = w;
+                sharpCanvas.height = h;
+                const sctx = sharpCanvas.getContext('2d');
+                sctx.filter = 'contrast(1.05)';
+                sctx.drawImage(finalCanvas, 0, 0);
+
+                return sharpCanvas;
+            }
+
+            // --- CARTOONIFY ---
+            function cartoonifyCurrent() {
+                if (!currentImage) return;
+                try {
+                    const cartoonCanvas = applyCartoonEffect(currentImage, currentStyle);
+                    currentCartoonDataURL = cartoonCanvas.toDataURL('image/png');
+
+                    cartoonWrapper.innerHTML = '';
+                    cartoonWrapper.appendChild(cartoonCanvas);
+                    cartoonCanvas.style.width = '100%';
+                    cartoonCanvas.style.height = '100%';
+                    cartoonCanvas.style.objectFit = 'cover';
+                    cartoonCanvas.style.display = 'block';
+
+                    const watermark = document.createElement('div');
+                    watermark.className = 'watermark-preview';
+                    watermark.textContent = '🔒 PREVIEW';
+                    cartoonWrapper.appendChild(watermark);
+
+                    isPaid = false;
+                    transactionId = null;
+                    downloadBtn.classList.remove('btn-download-unlocked');
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+
+                    paymentSuccessMsg.classList.remove('show');
+                    paymentStatus.textContent = 'Choose a payment method above';
+                    paymentStatus.className = 'payment-status';
+                    modal.classList.remove('show');
+
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+
+            // --- DOWNLOAD HANDLER ---
+            function performDownload() {
+                if (!isPaid) {
+                    modal.classList.add('show');
+                    return;
+                }
+
+                const el = cartoonWrapper.querySelector('canvas');
+                if (!el) {
+                    alert('No cartoon available. Please upload and cartoonify first.');
+                    return;
+                }
+
+                const link = document.createElement('a');
+                link.download = `toon_${currentStyle}.png`;
+                link.href = el.toDataURL('image/png');
+                link.click();
+            }
+
+            function handleDownloadClick() {
+                if (!currentCartoonDataURL) {
+                    alert('Please upload an image and click "Cartoonify" first!');
+                    return;
+                }
+
+                if (isPaid) {
+                    performDownload();
+                } else {
+                    modal.classList.add('show');
+                    paymentStatus.textContent = 'Choose a payment method below';
+                    paymentStatus.className = 'payment-status';
+                }
+            }
+
+            // ================================================================
+            // 7. EVENT LISTENERS
+            // ================================================================
+            uploadZone.addEventListener('click', () => fileInput.click());
+
+            fileInput.addEventListener('change', (e) => {
+                if (fileInput.files && fileInput.files.length > 0) {
+                    loadImageFromFile(fileInput.files[0]);
+                }
+            });
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.style.background = '#6b4c3b';
+                uploadZone.style.borderColor = '#ffdd33';
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.style.background = '#5c4032';
+                uploadZone.style.borderColor = '#f7e600';
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.style.background = '#5c4032';
+                uploadZone.style.borderColor = '#f7e600';
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].type.startsWith('image/')) {
+                    loadImageFromFile(files[0]);
+                } else {
+                    alert('Drop an image file.');
+                }
+            });
+
+            cartoonifyBtn.addEventListener('click', cartoonifyCurrent);
+            resetBtn.addEventListener('click', resetDisplay);
+            downloadBtn.addEventListener('click', handleDownloadClick);
+
+            closeModalBtn.addEventListener('click', () => modal.classList.remove('show'));
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) modal.classList.remove('show');
+            });
+
+            // ================================================================
+            // 8. INITIALIZATION
+            // ================================================================
+            document.addEventListener('DOMContentLoaded', async () => {
+                // Load config
+                await loadConfigFromEnv();
+                
+                // Render PayPal button
+                await renderPayPalButton();
+                
+                // Setup credit/debit card button
+                setupCardPayment();
+                
+                console.log('✅ PhouitLab ready!');
+                console.log('📝 CONFIG:', CONFIG);
+            });
+
+            resetDisplay();
+
+        })();
+    </script>
+</body>
+</html>
