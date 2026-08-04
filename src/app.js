@@ -5,7 +5,7 @@
     const CONFIG = {
         MAX_IMAGE_SIZE: 700,
         PRICE_DISPLAY: '$1',
-        SERVER_URL: 'http://localhost:3000',
+        SERVER_URL: 'https://lamourangel.github.io/Picture-to-cartoon/',
         PAYPAL_CLIENT_ID: null,
         CURRENCY: 'USD',
         PRICE: '1'
@@ -14,30 +14,44 @@
     // Load config from server .env file
     async function loadConfigFromEnv() {
         try {
-            const response = await fetch('http://localhost:3000/api/paypal-config');
+            let response;
+            // Try relative path first (works when backend is served from same origin or proxied)
+            try {
+                response = await fetch('/api/paypal-config');
+            } catch (err) {
+                // Fallback to explicit server URL (useful in dev when frontend served separately)
+                response = await fetch(`${CONFIG.SERVER_URL}/api/paypal-config`);
+            }
+
             const data = await response.json();
-            
+
             if (data.success) {
                 CONFIG.PAYPAL_CLIENT_ID = data.clientId;
                 CONFIG.CURRENCY = data.currency;
                 CONFIG.PRICE = data.price;
-                CONFIG.SERVER_URL = data.serverUrl;
+                CONFIG.SERVER_URL = data.serverUrl || CONFIG.SERVER_URL || window.location.origin;
                 CONFIG.PRICE_DISPLAY = `$${data.price}`;
-                
+
                 const priceTag = document.getElementById('priceTag');
                 if (priceTag) {
                     priceTag.textContent = CONFIG.PRICE_DISPLAY;
                 }
-                
+
                 console.log('✅ Config loaded from .env:', CONFIG);
                 return true;
             }
             return false;
         } catch (error) {
             console.error('Error loading config:', error);
-            // Use default config
-            CONFIG.PAYPAL_CLIENT_ID = 'BAA61ATUiqOAF3AmtmKj0PwZN_JOxUld28cf6d1SZqpEUNil1d_DsfULEE-SCaCUGqs_f6ZWEuXrnRRmEM';
-            return true;
+            // Do not silently fall back to sandbox when you requested LIVE mode
+            CONFIG.PAYPAL_CLIENT_ID = null;
+            try {
+                CONFIG.SERVER_URL = window.location.origin || CONFIG.SERVER_URL;
+            } catch (e) {
+                CONFIG.SERVER_URL = CONFIG.SERVER_URL;
+            }
+            console.warn('Could not load /api/paypal-config; ensure the backend is running and SERVER_URL is set.');
+            return false;
         }
     }
 
@@ -83,13 +97,21 @@
     // Create payment on server
     async function createPaymentOnServer() {
         try {
-            const response = await fetch(`${CONFIG.SERVER_URL}/api/create-payment`, {
+            // Use relative endpoints so the frontend works when served from same origin
+            const url = '/api/create-payment';
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 }
             });
             
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('Create payment failed:', response.status, text);
+                throw new Error(`Create payment failed: ${response.status}`);
+            }
+
             const data = await response.json();
             
             if (!data.success) {
@@ -106,7 +128,8 @@
     // Verify payment on server
     async function verifyPaymentOnServer(orderID) {
         try {
-            const response = await fetch(`${CONFIG.SERVER_URL}/api/verify-payment`, {
+            const url = '/api/verify-payment';
+            const response = await fetch(url, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -114,6 +137,12 @@
                 body: JSON.stringify({ orderID })
             });
             
+            if (!response.ok) {
+                const text = await response.text();
+                console.error('Verify payment failed:', response.status, text);
+                throw new Error(`Verify payment failed: ${response.status}`);
+            }
+
             const data = await response.json();
             
             if (!data.success) {
@@ -155,15 +184,19 @@
         try {
             // Load config if not loaded
             if (!CONFIG.PAYPAL_CLIENT_ID) {
-                await loadConfigFromEnv();
+                const ok = await loadConfigFromEnv();
+                if (!ok || !CONFIG.PAYPAL_CLIENT_ID) {
+                    throw new Error('PayPal client ID not available. Make sure the backend /api/paypal-config returns a valid clientId.');
+                }
             }
             
             // Dynamically load PayPal SDK
             await new Promise((resolve, reject) => {
                 const script = document.createElement('script');
-                script.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=${CONFIG.CURRENCY}`;
+                const clientIdForSdk = CONFIG.PAYPAL_CLIENT_ID; // use explicit live client id provided by backend
+                script.src = `https://www.paypal.com/sdk/js?client-id=${clientIdForSdk}&currency=${CONFIG.CURRENCY}`;
                 script.onload = resolve;
-                script.onerror = reject;
+                script.onerror = (err) => reject(new Error('Failed to load PayPal SDK: ' + (err && err.message)));
                 document.head.appendChild(script);
             });
             
@@ -213,7 +246,7 @@
             const container = document.getElementById('paypal-button-container');
             container.innerHTML = `
                 <div style="color: #dc3545; padding: 10px; background: rgba(220,53,69,0.1); border-radius: 8px;">
-                    ⚠️ Failed to load PayPal. Please refresh the page.
+                    ⚠️ Failed to load PayPal. Please refresh the page.<br/><small>${error.message || ''}</small>
                 </div>
             `;
         }
