@@ -20,7 +20,7 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-// PayPal Configuration - DETECTS LIVE vs SANDBOX automatically
+// PayPal Configuration - SANDBOX MODE FOR TESTING
 function getPayPalClient() {
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -29,13 +29,14 @@ function getPayPalClient() {
         throw new Error('Missing PayPal credentials in .env file');
     }
 
-    // VALIDATE: Live Client IDs start with 'A' or 'Ab'
-    if (!clientId.startsWith('A') && !clientId.startsWith('Ab')) {
-        console.warn('⚠️ WARNING: Client ID does not start with "A" - this may not be a valid Live ID');
+    // VALIDATE: Sandbox Client IDs start with 'BA' or 'BAA'
+    if (!clientId.startsWith('BA') && !clientId.startsWith('A')) {
+        console.warn('⚠️ WARNING: Client ID format may be invalid. Sandbox IDs start with "BA", Live IDs start with "A"');
     }
     
-    // Using LiveEnvironment = PRODUCTION
-    const environment = new paypal.core.LiveEnvironment(clientId, clientSecret);
+    // Using SandboxEnvironment = TESTING MODE
+    console.log('🧪 Running in SANDBOX mode for testing');
+    const environment = new paypal.core.SandboxEnvironment(clientId, clientSecret);
     return new paypal.core.PayPalHttpClient(environment);
 }
 
@@ -217,27 +218,38 @@ app.get('/api/download/:token', (req, res) => {
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'OK', 
-        environment: 'Live',
+        environment: 'Sandbox (Testing)',
         timestamp: new Date().toISOString()
     });
 });
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`💰 Mode: LIVE (Production)`);
+    console.log(`🧪 Mode: SANDBOX (Testing & Development)`);
     console.log(`📦 Price: ${process.env.PRICE || '1.00'} ${process.env.CURRENCY || 'USD'}`);
     
     // Validate credentials on startup
     try {
         const clientId = process.env.PAYPAL_CLIENT_ID;
-        if (clientId && clientId.startsWith('BAA')) {
-            console.error('❌ ERROR: Invalid Client ID format for Live mode!');
-            console.error('   Your Client ID starts with "BAA" - this is not a valid Live ID.');
-            console.error('   Please get the correct Live Client ID from developer.paypal.com');
-            process.exit(1); // Exit to prevent running with invalid credentials
+        const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
+        
+        if (!clientId || !clientSecret) {
+            console.error('❌ ERROR: Missing PayPal credentials in .env file!');
+            console.error('   Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET');
+            console.error('   Get your Sandbox credentials from: https://developer.paypal.com/dashboard');
+            process.exit(1);
         }
-        console.log('✅ PayPal credentials validated');
+        
+        if (!clientId.startsWith('BA') && !clientId.startsWith('A')) {
+            console.warn('⚠️ WARNING: Client ID format may be invalid');
+            console.warn('   Sandbox Client IDs typically start with "BA" or "BAA"');
+            console.warn('   Live Client IDs start with "A" or "Ab"');
+        }
+        
+        console.log('✅ PayPal credentials loaded successfully');
+        console.log('💡 Using Sandbox mode for testing. Switch to Live mode in production!');
     } catch (error) {
         console.error('❌ Credential validation failed:', error.message);
+        process.exit(1);
     }
 });
