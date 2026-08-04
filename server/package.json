@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "SERVER_URL=http://localhost:3000 PRICE=1 CURRENCY=USD PORT=3000 node server.js",
+    "start": "SERVER_URL=https://lamourangel.github.io/Picture-to-cartoon/ PRICE=1 CURRENCY=USD PORT=3000 node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
