@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 3000;
 // CORS Configuration
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
-        ? (process.env.FRONTEND_URL || 'https://your-domain.com')
+        ? (process.env.FRONTEND_URL || 'https://lamourangel.github.io')
         : '*', // Allow all origins in development
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
@@ -49,7 +49,7 @@ app.get('/api/paypal-config', (req, res) => {
             clientId: process.env.PAYPAL_CLIENT_ID,
             currency: process.env.CURRENCY || 'USD',
             price: process.env.PRICE || '1.00',
-            serverUrl: process.env.SERVER_URL || 'https://yourdomain.com' // CHANGE THIS!
+            serverUrl: process.env.SERVER_URL || 'https://lamourangel.github.io' // CHANGE THIS!
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -71,8 +71,8 @@ app.post('/api/create-payment', async (req, res) => {
         request.requestBody({
             intent: 'CAPTURE',
             application_context: {
-                return_url: `${process.env.SERVER_URL || 'https://yourdomain.com'}/return`,
-                cancel_url: `${process.env.SERVER_URL || 'https://yourdomain.com'}/cancel`,
+                return_url: `${process.env.SERVER_URL || 'https://lamourangel.github.io'}/return`,
+                cancel_url: `${process.env.SERVER_URL || 'https://lamourangel.github.io'}/cancel`,
                 brand_name: process.env.BRAND_NAME || 'Your Store',
                 shipping_preference: 'NO_SHIPPING',
                 user_action: 'PAY_NOW'
@@ -131,7 +131,7 @@ app.post('/api/verify-payment', async (req, res) => {
             
             res.json({
                 success: true,
-                downloadUrl: `${process.env.SERVER_URL || 'https://yourdomain.com'}/api/download/${downloadToken}`,
+                downloadUrl: `${process.env.SERVER_URL || 'https://lamourangel.github.io'}/api/download/${downloadToken}`,
                 transactionId: capture.result.purchase_units[0].payments.captures[0].id,
                 payerEmail: capture.result.payer.email_address
             });
