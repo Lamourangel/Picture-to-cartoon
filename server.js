@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const paypal = require('@paypal/checkout-server-sdk');
+const paypal = require('@paypal/paypal-server-sdk');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -62,7 +62,7 @@ app.get('/api/paypal-config', (req, res) => {
 app.post('/api/create-payment', async (req, res) => {
     try {
         const client = getPayPalClient();
-        const request = new paypal.orders.OrdersCreateRequest();
+        const ordersController = new paypal.OrdersController(client);
         
         // Add proper error handling for missing price
         const price = parseFloat(process.env.PRICE || '1.00');
@@ -70,7 +70,7 @@ app.post('/api/create-payment', async (req, res) => {
             throw new Error('Invalid price in environment variables');
         }
 
-        request.requestBody({
+        const orderData = {
             intent: 'CAPTURE',
             application_context: {
                 return_url: `${process.env.SERVER_URL || 'https://lamourangel.github.io'}/return`,
@@ -87,10 +87,10 @@ app.post('/api/create-payment', async (req, res) => {
                 },
                 description: process.env.PRODUCT_DESCRIPTION || 'Digital Product Purchase'
             }]
-        });
+        };
         
-        const order = await client.execute(request);
-        res.json({ success: true, id: order.result.id });
+        const response = await ordersController.createOrder({ body: orderData });
+        res.json({ success: true, id: response.result.id });
     } catch (error) {
         console.error('Create payment error:', error);
         res.status(500).json({ 
@@ -112,10 +112,9 @@ app.post('/api/verify-payment', async (req, res) => {
         }
 
         const client = getPayPalClient();
-        const request = new paypal.orders.OrdersCaptureRequest(orderID);
-        request.requestBody({});
-        
-        const capture = await client.execute(request);
+        const ordersController = new paypal.OrdersController(client);
+
+        const capture = await ordersController.captureOrder({ id: orderID });
         
         // Comprehensive status check
         if (capture.result.status === 'COMPLETED') {
