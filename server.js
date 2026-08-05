@@ -1,7 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const paypal = require('@paypal/checkout-server-sdk');
+const paypal = require('@paypal/paypal-server-sdk');
 const dotenv = require('dotenv');
 
 dotenv.config();
@@ -13,7 +13,7 @@ const PORT = process.env.PORT || 3000;
 const corsOptions = {
     origin: process.env.NODE_ENV === 'production' 
         ? (process.env.FRONTEND_URL || 'https://lamourangel.github.io')
-        : '*', // Allow all origins in development
+        : '*',
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization']
 };
@@ -31,12 +31,10 @@ function getPayPalClient() {
         throw new Error('Missing PayPal credentials in .env file');
     }
 
-    // VALIDATE: Sandbox Client IDs start with 'BA' or 'BAA'
     if (!clientId.startsWith('BA') && !clientId.startsWith('A')) {
         console.warn('⚠️ WARNING: Client ID format may be invalid. Sandbox IDs start with "BA", Live IDs start with "A"');
     }
     
-    // Using SandboxEnvironment = TESTING MODE
     console.log('🧪 Running in SANDBOX mode for testing');
     const environment = new paypal.core.SandboxEnvironment(clientId, clientSecret);
     return new paypal.core.PayPalHttpClient(environment);
@@ -45,13 +43,12 @@ function getPayPalClient() {
 // Get PayPal config for frontend
 app.get('/api/paypal-config', (req, res) => {
     try {
-        // Don't send clientSecret to frontend - security risk!
         res.json({
             success: true,
             clientId: process.env.PAYPAL_CLIENT_ID,
             currency: process.env.CURRENCY || 'USD',
             price: process.env.PRICE || '1.00',
-            serverUrl: process.env.SERVER_URL || 'https://lamourangel.github.io' // CHANGE THIS!
+            serverUrl: process.env.SERVER_URL || 'https://lamourangel.github.io'
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -62,15 +59,14 @@ app.get('/api/paypal-config', (req, res) => {
 app.post('/api/create-payment', async (req, res) => {
     try {
         const client = getPayPalClient();
-        const request = new paypal.orders.OrdersCreateRequest();
+        const ordersController = new paypal.OrdersController(client);
         
-        // Add proper error handling for missing price
         const price = parseFloat(process.env.PRICE || '1.00');
         if (isNaN(price) || price <= 0) {
             throw new Error('Invalid price in environment variables');
         }
 
-        request.requestBody({
+        const orderData = {
             intent: 'CAPTURE',
             application_context: {
                 return_url: `${process.env.SERVER_URL || 'https://lamourangel.github.io'}/return`,
@@ -83,20 +79,19 @@ app.post('/api/create-payment', async (req, res) => {
             purchase_units: [{
                 amount: {
                     currency_code: process.env.CURRENCY || 'USD',
-                    value: price.toFixed(2) // Ensures proper decimal format
+                    value: price.toFixed(2)
                 },
                 description: process.env.PRODUCT_DESCRIPTION || 'Digital Product Purchase'
             }]
-        });
-        
-        const order = await client.execute(request);
+        };
+
+        const order = await ordersController.createOrder({ body: orderData });
         res.json({ success: true, id: order.result.id });
     } catch (error) {
         console.error('Create payment error:', error);
         res.status(500).json({ 
             success: false, 
             error: error.message,
-            // Don't expose sensitive details in production
             details: process.env.NODE_ENV === 'development' ? error.stack : undefined
         });
     }
@@ -112,24 +107,18 @@ app.post('/api/verify-payment', async (req, res) => {
         }
 
         const client = getPayPalClient();
-        const request = new paypal.orders.OrdersCaptureRequest(orderID);
-        request.requestBody({});
+        const ordersController = new paypal.OrdersController(client);
+
+        const capture = await ordersController.captureOrder({ id: orderID });
         
-        const capture = await client.execute(request);
-        
-        // Comprehensive status check
         if (capture.result.status === 'COMPLETED') {
-            // Verify the payment amount matches your price
             const receivedAmount = parseFloat(capture.result.purchase_units[0].payments.captures[0].amount.value);
             const expectedPrice = parseFloat(process.env.PRICE || '1.00');
             
             if (receivedAmount !== expectedPrice) {
-                // Log this for fraud detection
                 console.warn(`⚠️ Payment amount mismatch: Expected ${expectedPrice}, got ${receivedAmount}`);
-                // Still process it, but log it
             }
 
-            // Generate a secure download token here (don't just use a static URL!)
             const downloadToken = Buffer.from(`${orderID}:${Date.now()}`).toString('base64');
             
             res.json({
@@ -147,7 +136,6 @@ app.post('/api/verify-payment', async (req, res) => {
     } catch (error) {
         console.error('Verify payment error:', error);
         
-        // Check for specific PayPal errors
         if (error.statusCode === 404) {
             res.status(404).json({ success: false, error: 'Order not found or already captured' });
         } else if (error.statusCode === 422) {
@@ -169,7 +157,6 @@ app.get('/', (req, res) => {
 
 // Return URL (after successful payment)
 app.get('/return', (req, res) => {
-    // You can redirect to a success page on your frontend
     res.send(`
         <html>
             <head><title>Payment Successful</title></head>
@@ -177,7 +164,6 @@ app.get('/return', (req, res) => {
                 <h1>✅ Payment Successful!</h1>
                 <p>Your download will begin shortly.</p>
                 <script>
-                    // Close window after 3 seconds (or redirect to your app)
                     setTimeout(() => window.close(), 3000);
                 </script>
             </body>
@@ -205,17 +191,14 @@ app.get('/cancel', (req, res) => {
 app.get('/api/download/:token', (req, res) => {
     const { token } = req.params;
     
-    // Validate the token here (check expiration, order ID, etc.)
     try {
         const decoded = Buffer.from(token, 'base64').toString();
         const [orderId, timestamp] = decoded.split(':');
         
-        // Check if token is less than 1 hour old
         if (Date.now() - parseInt(timestamp) > 3600000) {
             return res.status(410).send('Download link has expired');
         }
         
-        // Send your actual file here
         res.send('Your secure download file');
     } catch (error) {
         res.status(400).send('Invalid download token');
@@ -236,7 +219,6 @@ app.listen(PORT, () => {
     console.log(`🧪 Mode: SANDBOX (Testing & Development)`);
     console.log(`📦 Price: ${process.env.PRICE || '1.00'} ${process.env.CURRENCY || 'USD'}`);
     
-    // Validate credentials on startup
     try {
         const clientId = process.env.PAYPAL_CLIENT_ID;
         const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
