@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>💰 PhouitLab · PayPal Integration Ready</title>
+    <script src="https://www.paypal.com/sdk/js?client-id=BAA03Iim70nt-sjlQo-sgCsnU-ql8bWn0KyE35EZ-8FkHo0qjKmHBFDEp1TF5Dg122bmkB6gKTNk0s2SEk&components=hosted-buttons&disable-funding=venmo&currency=USD"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
         * {
@@ -477,82 +478,6 @@
             box-shadow: 0 4px 0 #4a3328;
         }
 
-        /* PayPal Button Container */
-        #paypal-button-container {
-            margin: 0.5rem 0;
-            min-height: 50px;
-        }
-
-        /* Credit Card Button Container */
-        #card-button-container {
-            margin: 0.5rem 0;
-        }
-
-        .payment-divider {
-            display: flex;
-            align-items: center;
-            margin: 1.2rem 0;
-            color: #d4c0b0;
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-
-        .payment-divider::before,
-        .payment-divider::after {
-            content: "";
-            flex: 1;
-            border-bottom: 2px solid #6b5a4a;
-        }
-
-        .payment-divider::before {
-            margin-right: 15px;
-        }
-
-        .payment-divider::after {
-            margin-left: 15px;
-        }
-
-        .card-pay-button {
-            background: #f7e600;
-            color: #4a3328;
-            border: 3px solid #4a3328;
-            padding: 0.8rem 1.6rem;
-            border-radius: 60px;
-            font-weight: 800;
-            font-size: 1rem;
-            cursor: pointer;
-            width: 100%;
-            max-width: 300px;
-            margin: 0 auto;
-            box-shadow: 0 6px 0 #4a3328;
-            font-family: 'Segoe UI', 'Comic Sans MS', 'Chalkboard SE', cursive, sans-serif;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-        }
-
-        .card-pay-button:hover {
-            background: #ffe033;
-            transform: scale(1.02);
-        }
-
-        .card-pay-button:active {
-            transform: translateY(4px);
-            box-shadow: 0 2px 0 #4a3328;
-        }
-
-        .card-pay-button i {
-            font-size: 1.2rem;
-        }
-
-        .card-pay-button:disabled {
-            opacity: 0.6;
-            cursor: not-allowed;
-            transform: none !important;
-        }
-
         .download-paywall-content .btn-close-modal {
             background: transparent;
             border: 2px solid #6b5a4a;
@@ -581,37 +506,6 @@
 
         .download-paywall-content .success-message.show {
             display: block;
-        }
-
-        .download-paywall-content .payment-status {
-            color: #d4c0b0;
-            font-size: 0.9rem;
-            margin: 0.5rem 0;
-            min-height: 1.5rem;
-        }
-
-        .download-paywall-content .payment-status.error {
-            color: #dc3545;
-        }
-
-        .download-paywall-content .payment-status.success {
-            color: #28a745;
-        }
-
-        .payment-loading-spinner {
-            display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(74, 51, 40, 0.3);
-            border-radius: 50%;
-            border-top-color: #4a3328;
-            animation: spin 0.8s linear infinite;
-        }
-
-        @keyframes spin {
-            to {
-                transform: rotate(360deg);
-            }
         }
 
         @media (max-width: 700px) {
@@ -712,23 +606,12 @@
             <div class="price-tag" id="priceTag">$1</div>
 
             <!-- PayPal Button Container -->
-            <div id="paypal-button-container"></div>
-
-            <!-- Divider -->
-            <div class="payment-divider">OR</div>
-
-            <!-- Credit/Debit Card Button Container -->
-            <div id="card-button-container"></div>
-
-            <!-- Card Fields Container -->
-            <div class="card-fields-container">
-                <div class="card-field" id="paypal-card-fields-number"></div>
-                <div class="card-field" id="paypal-card-fields-expiry"></div>
-                <div class="card-field" id="paypal-card-fields-cvv"></div>
-            </div>
-            <button id="pay-button">Pay Now</button>
-
-            <div class="payment-status" id="paymentStatus">Choose a payment method above</div>
+            <div id="paypal-container-CBQCVTRDQKY34"></div>
+            <script>
+              paypal.HostedButtons({
+                hostedButtonId: "CBQCVTRDQKY34",
+              }).render("#paypal-container-CBQCVTRDQKY34")
+            </script>
             <div class="success-message" id="paymentSuccessMsg">✅ Payment successful! Download ready.</div>
 
             <button class="btn-close-modal" id="closeModalBtn">Cancel</button>
@@ -743,40 +626,17 @@
             // ================================================================
             const CONFIG = {
                 MAX_IMAGE_SIZE: 700,
-                PRICE_DISPLAY: '$1',
-                SERVER_URL: 'https://lamourangel.github.io/Picture-to-cartoon/',
-                PAYPAL_CLIENT_ID: null,
-                CURRENCY: 'USD',
-                PRICE: '1'
+                PRICE_DISPLAY: '$1'
             };
 
-            // Load config from server .env file
-            async function loadConfigFromEnv() {
-                try {
-                    const response = await fetch('https://lamourangel.github.io/Picture-to-cartoon/api/paypal-config');
-                    const data = await response.json();
-                    
-                    if (data.success) {
-                        CONFIG.PAYPAL_CLIENT_ID = data.clientId;
-                        CONFIG.CURRENCY = data.currency;
-                        CONFIG.PRICE = data.price;
-                        CONFIG.SERVER_URL = data.serverUrl;
-                        CONFIG.PRICE_DISPLAY = `$${data.price}`;
-                        
-                        const priceTag = document.getElementById('priceTag');
-                        if (priceTag) {
-                            priceTag.textContent = CONFIG.PRICE_DISPLAY;
-                        }
-                        
-                        console.log('✅ Config loaded from .env:', CONFIG);
-                        return true;
-                    }
-                    return false;
-                } catch (error) {
-                    console.error('Error loading config:', error);
-                    // Use default config
-                    CONFIG.PAYPAL_CLIENT_ID = 'BAA61ATUiqOAF3AmtmKj0PwZN_JOxUld28cf6d1SZqpEUNil1d_DsfULEE-SCaCUGqs_f6ZWEuXrnRRmMEM';
-                    return true;
+            function checkPayPalReturn() {
+                const params = new URLSearchParams(window.location.search);
+                if (params.has('token') || params.has('PayerID')) {
+                    isPaid = true;
+                    downloadBtn.classList.add('btn-download-unlocked');
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download (Unlocked)';
+                    showSuccess('Payment confirmed! You can now download your image.');
+                    window.history.replaceState({}, document.title, window.location.pathname);
                 }
             }
 
@@ -819,205 +679,18 @@
             // 3. PAYMENT FUNCTIONS
             // ================================================================
             
-            // Create payment on server
-            async function createPaymentOnServer() {
-                try {
-                    const response = await fetch(`${CONFIG.SERVER_URL}/api/create-payment`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (!data.success) {
-                        throw new Error(data.error || 'Failed to create payment');
-                    }
-                    
-                    return data.id;
-                } catch (error) {
-                    console.error('Create payment error:', error);
-                    throw error;
-                }
-            }
-
-            // Verify payment on server
-            async function verifyPaymentOnServer(orderID) {
-                try {
-                    const response = await fetch(`${CONFIG.SERVER_URL}/api/verify-payment`, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({ orderID })
-                    });
-                    
-                    const data = await response.json();
-                    
-                    if (!data.success) {
-                        throw new Error(data.error || 'Payment verification failed');
-                    }
-                    
-                    return data;
-                } catch (error) {
-                    console.error('Verify payment error:', error);
-                    throw error;
-                }
-            }
-
-            // Handle successful payment
-            function handlePaymentSuccess(result) {
+            function unlockDownload() {
                 showSuccess('Payment confirmed! You can now download your image.');
                 
-                // Update UI to show download is unlocked
                 isPaid = true;
-                transactionId = result.transactionId;
                 downloadBtn.classList.add('btn-download-unlocked');
                 downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download (Unlocked)';
                 
-                // Show success in modal
                 paymentSuccessMsg.classList.add('show');
-                paymentStatus.textContent = '✅ Payment verified! Click Download to save your image.';
-                paymentStatus.className = 'payment-status success';
                 
-                // Auto-close modal after 2 seconds
                 setTimeout(() => {
                     modal.classList.remove('show');
                 }, 2000);
-            }
-
-            // ================================================================
-            // 4. PAYPAL BUTTON
-            // ================================================================
-            async function renderPayPalButton() {
-                try {
-                    // Load config if not loaded
-                    if (!CONFIG.PAYPAL_CLIENT_ID) {
-                        await loadConfigFromEnv();
-                    }
-                    
-                    // Dynamically load PayPal SDK
-                    await new Promise((resolve, reject) => {
-                        const script = document.createElement('script');
-                        script.src = `https://www.paypal.com/sdk/js?client-id=${CONFIG.PAYPAL_CLIENT_ID}&currency=${CONFIG.CURRENCY}`;
-                        script.onload = resolve;
-                        script.onerror = reject;
-                        document.head.appendChild(script);
-                    });
-                    
-                    // Render PayPal button
-                    paypal.Buttons({
-                        createOrder: async () => {
-                            try {
-                                paymentStatus.textContent = 'Creating payment...';
-                                paymentStatus.className = 'payment-status';
-                                const orderID = await createPaymentOnServer();
-                                return orderID;
-                            } catch (error) {
-                                paymentStatus.textContent = 'Error: ' + error.message;
-                                paymentStatus.className = 'payment-status error';
-                                throw error;
-                            }
-                        },
-                        
-                        onApprove: async (data) => {
-                            try {
-                                paymentStatus.textContent = 'Verifying payment...';
-                                paymentStatus.className = 'payment-status';
-                                const result = await verifyPaymentOnServer(data.orderID);
-                                handlePaymentSuccess(result);
-                            } catch (error) {
-                                paymentStatus.textContent = 'Error: ' + error.message;
-                                paymentStatus.className = 'payment-status error';
-                            }
-                        },
-                        
-                        onError: (err) => {
-                            console.error('PayPal error:', err);
-                            paymentStatus.textContent = 'PayPal error. Please try again.';
-                            paymentStatus.className = 'payment-status error';
-                            showError('PayPal payment failed. Please try again.');
-                        },
-                        
-                        onCancel: () => {
-                            paymentStatus.textContent = 'Payment cancelled. You can try again.';
-                            paymentStatus.className = 'payment-status';
-                        }
-                        
-                    }).render('#paypal-button-container');
-                    
-                } catch (error) {
-                    console.error('Failed to load PayPal:', error);
-                    const container = document.getElementById('paypal-button-container');
-                    container.innerHTML = `
-                        <div style="color: #dc3545; padding: 10px; background: rgba(220,53,69,0.1); border-radius: 8px;">
-                            ⚠️ Failed to load PayPal. Please refresh the page.
-                        </div>
-                    `;
-                }
-            }
-
-            // ================================================================
-            // 5. CREDIT/DEBIT CARD BUTTON
-            // ================================================================
-            function setupCardPayment() {
-                const cardButton = document.createElement('button');
-                cardButton.className = 'card-pay-button';
-                cardButton.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
-                cardButton.id = 'cardPayButton';
-                
-                // Add to container
-                const container = document.getElementById('card-button-container');
-                container.appendChild(cardButton);
-                
-                // Click handler
-                cardButton.addEventListener('click', async function() {
-                    // Disable button to prevent double-click
-                    this.disabled = true;
-                    this.innerHTML = '<span class="payment-loading-spinner"></span> Processing...';
-                    
-                    try {
-                        // Step 1: Create payment
-                        paymentStatus.textContent = 'Creating payment...';
-                        paymentStatus.className = 'payment-status';
-                        
-                        const orderID = await createPaymentOnServer();
-                        
-                        // Step 2: Simulate card payment (in production, redirect to payment page)
-                        // For this demo, we'll use PayPal's card processing
-                        // In production, you would redirect to a card payment page
-                        
-                        // For demo: Show a card payment form
-                        paymentStatus.textContent = 'For card payments, we use PayPal\'s secure checkout. Redirecting...';
-                        paymentStatus.className = 'payment-status';
-                        
-                        // Simulate card payment flow
-                        // In production, you would redirect to your card payment page
-                        // or use PayPal's card fields
-                        
-                        // For demo: auto-verify after 2 seconds
-                        setTimeout(async () => {
-                            try {
-                                const result = await verifyPaymentOnServer(orderID);
-                                handlePaymentSuccess(result);
-                                this.disabled = false;
-                                this.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
-                            } catch (error) {
-                                paymentStatus.textContent = 'Card payment failed: ' + error.message;
-                                paymentStatus.className = 'payment-status error';
-                                this.disabled = false;
-                                this.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
-                            }
-                        }, 2000);
-                        
-                    } catch (error) {
-                        paymentStatus.textContent = 'Error: ' + error.message;
-                        paymentStatus.className = 'payment-status error';
-                        this.disabled = false;
-                        this.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
-                    }
-                });
             }
 
             // ================================================================
@@ -1035,7 +708,6 @@
             const modal = document.getElementById('downloadPaywallModal');
             const closeModalBtn = document.getElementById('closeModalBtn');
             const paymentSuccessMsg = document.getElementById('paymentSuccessMsg');
-            const paymentStatus = document.getElementById('paymentStatus');
 
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
@@ -1078,8 +750,6 @@
                 downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
 
                 paymentSuccessMsg.classList.remove('show');
-                paymentStatus.textContent = 'Choose a payment method above';
-                paymentStatus.className = 'payment-status';
                 modal.classList.remove('show');
             }
 
@@ -1371,8 +1041,6 @@
                     downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
 
                     paymentSuccessMsg.classList.remove('show');
-                    paymentStatus.textContent = 'Choose a payment method above';
-                    paymentStatus.className = 'payment-status';
                     modal.classList.remove('show');
 
                 } catch (e) {
@@ -1409,8 +1077,6 @@
                     performDownload();
                 } else {
                     modal.classList.add('show');
-                    paymentStatus.textContent = 'Choose a payment method below';
-                    paymentStatus.className = 'payment-status';
                 }
             }
 
@@ -1462,14 +1128,7 @@
             // 8. INITIALIZATION
             // ================================================================
             document.addEventListener('DOMContentLoaded', async () => {
-                // Load config
-                await loadConfigFromEnv();
-                
-                // Render PayPal button
-                await renderPayPalButton();
-                
-                // Setup credit/debit card button
-                setupCardPayment();
+                checkPayPalReturn();
                 
                 console.log('✅ PhouitLab ready!');
                 console.log('📝 CONFIG:', CONFIG);

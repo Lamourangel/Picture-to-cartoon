@@ -16,7 +16,6 @@
     "node": "18.x"
   },
   "dependencies": {
-    "@paypal/paypal-server-sdk": "^1.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1"

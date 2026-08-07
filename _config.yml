@@ -1,8 +1,0 @@
-# Jekyll configuration: exclude non-site directories so GitHub Pages/Jekyll won't attempt to render dependency or server files
-# This prevents Liquid parsing errors from files inside node_modules or server directories.
-exclude:
-  - node_modules
-  - server
-  - vendor
-  - Gemfile*
-  - README.md
