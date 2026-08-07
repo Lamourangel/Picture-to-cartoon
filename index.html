@@ -699,9 +699,9 @@
     </div>
 
     <!-- UI Feedback Elements -->
-    <div id="loading" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #f7e600; color: #4a3328; padding: 1rem 2rem; border-radius: 40px; font-weight: 700; box-shadow: 0 6px 0 #4a3328;"></div>
-    <div id="error" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #dc3545; color: white; padding: 1rem 2rem; border-radius: 40px; font-weight: 700; box-shadow: 0 6px 0 rgba(0,0,0,0.2);"></div>
-    <div id="success" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #28a745; color: white; padding: 1rem 2rem; border-radius: 40px; font-weight: 700; box-shadow: 0 6px 0 rgba(0,0,0,0.2);"></div>
+    <div id="loading" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #f7e600; color: #4a3328; padding: 1rem 2rem; border-radius: 40px; font-weight:700;"></div>
+    <div id="error" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #dc3545; color: white; padding: 1rem 2rem; border-radius: 40px; font-weight:700;"></div>
+    <div id="success" style="display:none; position: fixed; top: 20px; left: 50%; transform: translateX(-50%); background: #28a745; color: white; padding: 1rem 2rem; border-radius: 40px; font-weight:700;"></div>
 
     <!-- DOWNLOAD PAYWALL MODAL -->
     <div class="download-paywall-modal" id="downloadPaywallModal">
@@ -774,9 +774,9 @@
                     return false;
                 } catch (error) {
                     console.error('Error loading config:', error);
-                    // Use default config
-                    CONFIG.PAYPAL_CLIENT_ID = 'AdIejyGOrgX--gb5A-EqCicxfylb5W8EGWzXcuYOoOq0wbgACMWC9v6JSlsnh3hvA8G6tp9JfYg1QyFC
-';
+                    // Use default config (single-line placeholder). Replace '' with your real PayPal client id
+                    // or ensure your server /api/paypal-config returns a valid clientId.
+                    CONFIG.PAYPAL_CLIENT_ID = ''; // <-- set your client id here if you don't use the server endpoint
                     return true;
                 }
             }
@@ -1002,191 +1002,213 @@
                             try {
                                 const result = await verifyPaymentOnServer(orderID);
                                 handlePaymentSuccess(result);
+                                cardButton.disabled = false;
+                                cardButton.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
                             } catch (err) {
-                                paymentStatus.textContent = 'Error: ' + err.message;
+                                paymentStatus.textContent = 'Card payment failed: ' + err.message;
                                 paymentStatus.className = 'payment-status error';
-                                showError('Card payment failed.');
-                            } finally {
                                 cardButton.disabled = false;
                                 cardButton.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
                             }
                         }, 2000);
-
+                        
                     } catch (error) {
-                        console.error('Card payment error:', error);
-                        paymentStatus.textContent = 'Error: ' + error.message;
+                        console.error('Card payment setup error:', error);
+                        paymentStatus.textContent = 'Error creating payment: ' + error.message;
                         paymentStatus.className = 'payment-status error';
-                        showError('Card payment failed.');
-                        cardButton.disabled = false;
-                        cardButton.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
+                        this.disabled = false;
+                        this.innerHTML = '<i class="fas fa-credit-card"></i> Pay with Credit/Debit Card';
                     }
                 });
             }
 
             // ================================================================
-            // 6. APP LOGIC (upload, cartoonify, download, modal)
+            // 6. IMAGE HANDLING (upload, preview, cartoonify simulation)
             // ================================================================
             let isPaid = false;
             let transactionId = null;
             let selectedStyle = 'manga';
-            const modal = document.getElementById('downloadPaywallModal');
-            const downloadBtn = document.getElementById('downloadBtn');
-            const paymentStatus = document.getElementById('paymentStatus');
-            const paymentSuccessMsg = document.getElementById('paymentSuccessMsg');
+            let originalImageDataUrl = null;
+            let cartoonImageDataUrl = null;
 
-            // Style selector
-            const styleSelector = document.getElementById('styleSelector');
-            styleSelector.addEventListener('click', (e) => {
-                const el = e.target.closest('.style-option');
-                if (!el) return;
-                document.querySelectorAll('.style-option').forEach(o => o.classList.remove('active'));
-                el.classList.add('active');
-                selectedStyle = el.dataset.style;
-            });
-
-            // File input and drag/drop
-            const fileInput = document.getElementById('fileInput');
             const uploadZone = document.getElementById('uploadZone');
+            const fileInput = document.getElementById('fileInput');
             const originalWrapper = document.getElementById('originalWrapper');
             const cartoonWrapper = document.getElementById('cartoonWrapper');
+            const styleSelector = document.getElementById('styleSelector');
+            const cartoonifyBtn = document.getElementById('cartoonifyBtn');
+            const resetBtn = document.getElementById('resetBtn');
+            const downloadBtn = document.getElementById('downloadBtn');
 
+            const modal = document.getElementById('downloadPaywallModal');
+            const paymentStatus = document.getElementById('paymentStatus');
+            const paymentSuccessMsg = document.getElementById('paymentSuccessMsg');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+
+            function dataURLToImg(dataURL) {
+                const img = new Image();
+                img.src = dataURL;
+                img.crossOrigin = 'anonymous';
+                img.style.width = '100%';
+                img.style.height = '100%';
+                img.style.objectFit = 'cover';
+                return img;
+            }
+
+            function clearWrapper(wrapper) {
+                while (wrapper.firstChild) wrapper.removeChild(wrapper.firstChild);
+            }
+
+            function setPlaceholder(wrapper, iconClass) {
+                clearWrapper(wrapper);
+                const i = document.createElement('i');
+                i.className = iconClass + ' placeholder-icon';
+                wrapper.appendChild(i);
+            }
+
+            function handleFiles(files) {
+                const file = files[0];
+                if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                    showError('Please upload a valid image file.');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    originalImageDataUrl = e.target.result;
+                    clearWrapper(originalWrapper);
+                    originalWrapper.appendChild(dataURLToImg(originalImageDataUrl));
+                    // Reset cartoon preview
+                    setPlaceholder(cartoonWrapper, 'fas fa-star');
+                    cartoonImageDataUrl = null;
+                    isPaid = false;
+                    downloadBtn.classList.remove('btn-download-unlocked');
+                    downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // Drag and drop handlers
             uploadZone.addEventListener('click', () => fileInput.click());
             uploadZone.addEventListener('dragover', (e) => {
                 e.preventDefault();
                 uploadZone.classList.add('dragover');
             });
-            uploadZone.addEventListener('dragleave', () => uploadZone.classList.remove('dragover'));
+            uploadZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+            });
             uploadZone.addEventListener('drop', (e) => {
                 e.preventDefault();
                 uploadZone.classList.remove('dragover');
-                const f = e.dataTransfer.files && e.dataTransfer.files[0];
-                if (f) handleFile(f);
+                handleFiles(e.dataTransfer.files);
+            });
+            fileInput.addEventListener('change', (e) => handleFiles(e.target.files));
+
+            // Style selection
+            styleSelector.addEventListener('click', (e) => {
+                const target = e.target.closest('.style-option');
+                if (!target) return;
+                Array.from(styleSelector.children).forEach(el => el.classList.remove('active'));
+                target.classList.add('active');
+                selectedStyle = target.dataset.style || 'manga';
             });
 
-            fileInput.addEventListener('change', (e) => {
-                const f = e.target.files && e.target.files[0];
-                if (f) handleFile(f);
-            });
-
-            function handleFile(file) {
-                if (!file.type.startsWith('image/')) {
-                    showError('Please upload an image file.');
-                    return;
-                }
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const img = new Image();
-                    img.onload = () => {
-                        // Resize if needed
-                        const canvas = document.createElement('canvas');
-                        const max = CONFIG.MAX_IMAGE_SIZE;
-                        let w = img.width;
-                        let h = img.height;
-                        if (Math.max(w, h) > max) {
-                            const ratio = max / Math.max(w, h);
-                            w = Math.round(w * ratio);
-                            h = Math.round(h * ratio);
-                        }
-                        canvas.width = w;
-                        canvas.height = h;
-                        const ctx = canvas.getContext('2d');
-                        ctx.drawImage(img, 0, 0, w, h);
-                        originalWrapper.innerHTML = '';
-                        originalWrapper.appendChild(canvas);
-                    };
-                    img.src = reader.result;
-                };
-                reader.readAsDataURL(file);
-            }
-
-            // Cartoonify button
-            const cartoonifyBtn = document.getElementById('cartoonifyBtn');
+            // Cartoonify simulation (replace with your processing logic)
             cartoonifyBtn.addEventListener('click', async () => {
-                // For demo purposes we simulate a cartoonify operation by copying the original canvas
-                const originalCanvas = originalWrapper.querySelector('canvas');
-                if (!originalCanvas) {
-                    showError('Upload an image first.');
+                if (!originalImageDataUrl) {
+                    showError('Please upload an image first.');
                     return;
                 }
                 showLoading('Cartoonifying...');
-                // Simulate processing
-                setTimeout(() => {
-                    const c = document.createElement('canvas');
-                    c.width = originalCanvas.width;
-                    c.height = originalCanvas.height;
-                    const ctx = c.getContext('2d');
-                    ctx.drawImage(originalCanvas, 0, 0);
-                    // Fake "cartoon" effect: increase contrast + posterize simulation
-                    const imgData = ctx.getImageData(0, 0, c.width, c.height);
-                    const data = imgData.data;
+                try {
+                    // Simulate processing delay
+                    await new Promise(r => setTimeout(r, 900));
+
+                    // Simple "cartoon" effect: draw image to canvas and posterize colors
+                    const img = new Image();
+                    img.src = originalImageDataUrl;
+                    await new Promise((resolve) => { img.onload = resolve; });
+
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    const size = Math.min(CONFIG.MAX_IMAGE_SIZE, Math.max(img.width, img.height));
+                    canvas.width = canvas.height = size;
+
+                    // draw image filling the canvas
+                    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                    // Posterize effect
+                    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+                    const data = imageData.data;
+                    const levels = selectedStyle === 'soft' ? 6 : selectedStyle === 'vivid' ? 4 : 3;
                     for (let i = 0; i < data.length; i += 4) {
-                        // simple posterize-ish effect
-                        data[i] = Math.round(data[i] / 64) * 64;
-                        data[i+1] = Math.round(data[i+1] / 64) * 64;
-                        data[i+2] = Math.round(data[i+2] / 64) * 64;
+                        data[i] = Math.floor(data[i] / levels) * levels; // R
+                        data[i+1] = Math.floor(data[i+1] / levels) * levels; // G
+                        data[i+2] = Math.floor(data[i+2] / levels) * levels; // B
                     }
-                    ctx.putImageData(imgData, 0, 0);
-                    cartoonWrapper.innerHTML = '';
-                    cartoonWrapper.appendChild(c);
+                    ctx.putImageData(imageData, 0, 0);
+
+                    cartoonImageDataUrl = canvas.toDataURL('image/png');
+                    clearWrapper(cartoonWrapper);
+                    cartoonWrapper.appendChild(canvas);
+
                     hideLoading();
-                    showSuccess('Preview ready! To download the full resolution, click Download (locked).');
-                }, 900);
-            });
-
-            // Reset button
-            const resetBtn = document.getElementById('resetBtn');
-            resetBtn.addEventListener('click', () => {
-                originalWrapper.innerHTML = '<i class="fas fa-camera placeholder-icon"></i>';
-                cartoonWrapper.innerHTML = '<i class="fas fa-star placeholder-icon"></i><div class="watermark-preview">🔒 PREVIEW</div>';
-                downloadBtn.classList.remove('btn-download-unlocked');
-                downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
-                isPaid = false;
-                transactionId = null;
-            });
-
-            // Download button - show paywall if not paid
-            downloadBtn.addEventListener('click', async () => {
-                if (isPaid) {
-                    // For demo, download the canvas as image
-                    const canvas = cartoonWrapper.querySelector('canvas');
-                    if (!canvas) {
-                        showError('No cartoon image to download.');
-                        return;
-                    }
-                    const link = document.createElement('a');
-                    link.href = canvas.toDataURL('image/png');
-                    link.download = 'cartoon.png';
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    showSuccess('Download started.');
-                } else {
-                    modal.classList.add('show');
+                } catch (err) {
+                    hideLoading();
+                    console.error('Cartoonify error:', err);
+                    showError('Failed to cartoonify image.');
                 }
             });
 
-            // Close modal
-            const closeModalBtn = document.getElementById('closeModalBtn');
+            resetBtn.addEventListener('click', () => {
+                originalImageDataUrl = null;
+                cartoonImageDataUrl = null;
+                setPlaceholder(originalWrapper, 'fas fa-camera');
+                setPlaceholder(cartoonWrapper, 'fas fa-star');
+                isPaid = false;
+                downloadBtn.classList.remove('btn-download-unlocked');
+                downloadBtn.innerHTML = '<i class="fas fa-download"></i> Download';
+            });
+
+            // Download handling
+            downloadBtn.addEventListener('click', () => {
+                if (!cartoonImageDataUrl) {
+                    showError('No cartoon image to download. Please cartoonify first.');
+                    return;
+                }
+                if (!isPaid) {
+                    // show paywall modal
+                    modal.classList.add('show');
+                    // render paypal button if needed
+                    renderPayPalButton();
+                    setupCardPayment();
+                    return;
+                }
+                // create link and download
+                const a = document.createElement('a');
+                a.href = cartoonImageDataUrl;
+                a.download = 'cartoon.png';
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+            });
+
             closeModalBtn.addEventListener('click', () => {
                 modal.classList.remove('show');
             });
 
-            // Initialize page: load config, render PayPal button, setup card button
-            (async function init() {
-                try {
-                    await loadConfigFromEnv();
-                } catch (_) {
-                    // proceed with default config
-                } finally {
-                    // update price tag
-                    const priceTag = document.getElementById('priceTag');
-                    if (priceTag) priceTag.textContent = CONFIG.PRICE_DISPLAY || `$${CONFIG.PRICE}`;
-                    // render paypal button
-                    renderPayPalButton();
-                    // setup card payment
-                    setupCardPayment();
-                }
-            })();
+            // On load: set placeholders
+            setPlaceholder(originalWrapper, 'fas fa-camera');
+            setPlaceholder(cartoonWrapper, 'fas fa-star');
+
+            // Expose some vars for debugging
+            window.__PTC = {
+                getConfig: () => CONFIG
+            };
+
+            // Optional: auto-init config load for PayPal if needed
+            // loadConfigFromEnv(); // we load it lazily when showing paywall
 
         })();
     </script>
