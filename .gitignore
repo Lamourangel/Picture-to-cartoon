@@ -1,1 +1,43 @@
+# Environment & secrets
 .env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+npm-debug.log
+yarn-error.log
+package-lock.json
+yarn.lock
+
+# Build / output
+/dist
+/build
+/.next
+/out
+/coverage
+/public/build
+gh-pages
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs and temp
+logs/
+*.log
+tmp/
+.cache/
+
+# Editor / IDE
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Misc
+uploads/
+*.bak
+*.swp
