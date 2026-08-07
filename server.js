@@ -22,7 +22,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static('.'));
 
-// PayPal Configuration - SANDBOX MODE FOR TESTING
+// PayPal Configuration - LIVE MODE
 function getPayPalClient() {
     const clientId = process.env.PAYPAL_CLIENT_ID;
     const clientSecret = process.env.PAYPAL_CLIENT_SECRET;
@@ -31,12 +31,14 @@ function getPayPalClient() {
         throw new Error('Missing PayPal credentials in .env file');
     }
 
-    if (!clientId.startsWith('BA') && !clientId.startsWith('A')) {
-        console.warn('⚠️ WARNING: Client ID format may be invalid. Sandbox IDs start with "BA", Live IDs start with "A"');
+    // Live Client IDs typically start with "A" or "Ab"
+    if (!clientId.startsWith('A') && !clientId.startsWith('Ab')) {
+        console.warn('⚠️ WARNING: Client ID format may be invalid. Live IDs typically start with "A" or "Ab"');
     }
     
-    console.log('🧪 Running in SANDBOX mode for testing');
-    const environment = new paypal.core.SandboxEnvironment(clientId, clientSecret);
+    console.log('💰 Running in LIVE mode - REAL transactions');
+    // CHANGE: SandboxEnvironment -> LiveEnvironment
+    const environment = new paypal.core.LiveEnvironment(clientId, clientSecret);
     return new paypal.core.PayPalHttpClient(environment);
 }
 
@@ -48,7 +50,9 @@ app.get('/api/paypal-config', (req, res) => {
             clientId: process.env.PAYPAL_CLIENT_ID,
             currency: process.env.CURRENCY || 'USD',
             price: process.env.PRICE || '1.00',
-            serverUrl: process.env.SERVER_URL || 'https://lamourangel.github.io'
+            serverUrl: process.env.SERVER_URL || 'https://lamourangel.github.io',
+            // CHANGE: Add mode indicator for frontend
+            mode: 'live'
         });
     } catch (error) {
         res.status(500).json({ success: false, error: error.message });
@@ -205,18 +209,18 @@ app.get('/api/download/:token', (req, res) => {
     }
 });
 
-// Health check endpoint (useful for monitoring)
+// Health check endpoint
 app.get('/health', (req, res) => {
     res.json({ 
         status: 'OK', 
-        environment: 'Sandbox (Testing)',
+        environment: 'LIVE (Production)', // CHANGE: Updated
         timestamp: new Date().toISOString()
     });
 });
 
 app.listen(PORT, () => {
     console.log(`🚀 Server running on http://localhost:${PORT}`);
-    console.log(`🧪 Mode: SANDBOX (Testing & Development)`);
+    console.log(`💰 Mode: LIVE (Production - Real transactions)`); // CHANGE: Updated
     console.log(`📦 Price: ${process.env.PRICE || '1.00'} ${process.env.CURRENCY || 'USD'}`);
     
     try {
@@ -226,18 +230,19 @@ app.listen(PORT, () => {
         if (!clientId || !clientSecret) {
             console.error('❌ ERROR: Missing PayPal credentials in .env file!');
             console.error('   Please set PAYPAL_CLIENT_ID and PAYPAL_CLIENT_SECRET');
-            console.error('   Get your Sandbox credentials from: https://developer.paypal.com/dashboard');
+            console.error('   Get your LIVE credentials from: https://developer.paypal.com/dashboard');
             process.exit(1);
         }
         
-        if (!clientId.startsWith('BA') && !clientId.startsWith('A')) {
+        if (!clientId.startsWith('A') && !clientId.startsWith('Ab')) {
             console.warn('⚠️ WARNING: Client ID format may be invalid');
-            console.warn('   Sandbox Client IDs typically start with "BA" or "BAA"');
-            console.warn('   Live Client IDs start with "A" or "Ab"');
+            console.warn('   LIVE Client IDs typically start with "A" or "Ab"');
+            console.warn('   Make sure you\'re using LIVE credentials, not Sandbox');
         }
         
         console.log('✅ PayPal credentials loaded successfully');
-        console.log('💡 Using Sandbox mode for testing. Switch to Live mode in production!');
+        console.log('🔴 LIVE MODE ACTIVE - Real money transactions');
+        console.log('⚠️  Test thoroughly before going live!');
     } catch (error) {
         console.error('❌ Credential validation failed:', error.message);
         process.exit(1);
