@@ -11,6 +11,10 @@
   "author": "",
   "license": "ISC",
   "type": "commonjs",
+  "homepage": "https://Lamourangel.github.io/Picture-to-cartoon",
+  "engines": {
+    "node": "18.x"
+  },
   "dependencies": {
     "@paypal/paypal-server-sdk": "^1.0.0",
     "cors": "^2.8.6",
